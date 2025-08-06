@@ -4,7 +4,7 @@ import streamlit as st
 import xgboost
 from sklearn.preprocessing import OneHotEncoder
 
-st.title('Fraud Detection on CSV File')
+st.title('Intelligent Mobile Money Fraud Prediction')
 
 model = jb.load('fraud_detection_model.pkl')
 
@@ -46,3 +46,4 @@ def process_file(file):
 
 
 process_file(uploaded_file)
+
