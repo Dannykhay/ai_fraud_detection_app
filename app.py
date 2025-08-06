@@ -1,6 +1,7 @@
 import joblib as jb
 import pandas as pd
 import streamlit as st
+import xgboost
 from sklearn.preprocessing import OneHotEncoder
 
 st.title('Fraud Detection on CSV File')
@@ -41,6 +42,7 @@ def process_file(file):
         st.download_button("Download Results", df.to_csv(index=False), "predictions.csv", "text/csv")
     else:
         st.warning('Please upload a CSV file.')
+
 
 
 process_file(uploaded_file)
