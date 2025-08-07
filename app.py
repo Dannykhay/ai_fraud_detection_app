@@ -10,40 +10,44 @@ model = jb.load('fraud_detection_model.pkl')
 
 uploaded_file = st.file_uploader("Upload CSV File", type=["csv"])
 
+columns = ['step', 'type', 'amount', 'nameOrig', 'oldbalanceOrg', 'newbalanceOrig',
+       'nameDest', 'oldbalanceDest', 'newbalanceDest', 'isFraud',
+       'isFlaggedFraud']
 
 def process_file(file):
     if file is not None:
         df = pd.read_csv(file)
-        st.subheader("Uploaded Data")
-        st.write(df.head())
-
-        encoder = OneHotEncoder(sparse_output=False, handle_unknown='ignore')
-        encoder_df = encoder.fit(df[['type']])
-        type_encoded = encoder_df.transform(df[['type']])
-        type_encoded_df = pd.DataFrame(type_encoded, columns=encoder_df.get_feature_names_out(['type']))
-        type_encoded_df.index = df.index 
-
-        df = pd.concat([df, type_encoded_df], axis=1)
-        df = df.drop(['type', 'nameOrig', 'nameDest'], axis=1)
-
-        if 'isFraud' in df.columns:
+        if all(col in df.columns for col in columns):
+            st.subheader("Uploaded Data")
+            st.write(df.head())
+    
+            encoder = OneHotEncoder(sparse_output=False, handle_unknown='ignore')
+            encoder_df = encoder.fit(df[['type']])
+            type_encoded = encoder_df.transform(df[['type']])
+            type_encoded_df = pd.DataFrame(type_encoded, columns=encoder_df.get_feature_names_out(['type']))
+            type_encoded_df.index = df.index 
+    
+            df = pd.concat([df, type_encoded_df], axis=1)
+            df = df.drop(['type', 'nameOrig', 'nameDest'], axis=1)
+    
             X = df.drop(['isFraud', 'isFlaggedFraud'], axis=1)
+    
+            prediction = model.predict(X)
+            df['prediction'] = prediction
+    
+            st.subheader("Prediction Results")
+    
+            df['Result'] = df['prediction'].apply(lambda x: 'Fraud' if x == 1 else 'Not Fraud')
+            st.write(df[['prediction', 'Result']])
+    
+            st.download_button("Download Results", df.to_csv(index=False), "predictions.csv", "text/csv")
         else:
-            X = df
-
-        prediction = model.predict(X)
-        df['prediction'] = prediction
-
-        st.subheader("Prediction Results")
-
-        df['Result'] = df['prediction'].apply(lambda x: 'Fraud' if x == 1 else 'Not Fraud')
-        st.write(df[['prediction', 'Result']])
-
-        st.download_button("Download Results", df.to_csv(index=False), "predictions.csv", "text/csv")
+            st.warning(f"Please make sure your dataset has these columns {columns}")
     else:
-        st.warning('Please upload a CSV file.')
+        st.warning("Please upload a CSV file, make sure the dataset have these columns in it")
 
 
 
 process_file(uploaded_file)
+
 
